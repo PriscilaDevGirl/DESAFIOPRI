@@ -1,0 +1,16 @@
+{
+  "name": "accenture-qa-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DemoQA API and browser automation challenge using JavaScript, Selenium WebDriver, and Cucumber",
+  "scripts": {
+    "test": "cucumber-js --format progress --format json:reports/cucumber.json",
+    "test:api": "cucumber-js --tags @api --format progress --format json:reports/api.json",
+    "test:ui": "cucumber-js --tags \"@ui and not @bonus\" --format progress --format json:reports/ui.json",
+    "test:bonus": "cucumber-js --tags @bonus --format progress --format json:reports/bonus.json"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.3.0",
+    "selenium-webdriver": "^4.30.0"
+  }
+}

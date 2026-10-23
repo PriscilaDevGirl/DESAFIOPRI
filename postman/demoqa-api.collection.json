@@ -1,0 +1,347 @@
+{
+  "info": {
+    "name": "Accenture QA Automation - DemoQA API",
+    "description": "Fluxo sequencial de conta e livros. Gera credenciais sintéticas durante a execução e remove a conta no último request.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://demoqa.com",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 - Criar usuário sintético",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const suffix = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);",
+              "pm.collectionVariables.set('username', `qa_${suffix}`);",
+              "pm.collectionVariables.set('password', `Qa!${Math.random().toString(36).slice(2, 12)}9`);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('A conta foi criada', () => pm.response.to.have.status(201));",
+              "if (pm.response.code === 201) {",
+              "  const result = pm.response.json();",
+              "  const userId = result.userID || result.userId;",
+              "  pm.expect(userId).to.be.a('string').and.not.empty;",
+              "  pm.collectionVariables.set('userId', userId);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userName\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/Account/v1/User",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2 - Gerar token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('O token foi gerado', () => pm.response.to.have.status(200));",
+              "const result = pm.response.json();",
+              "pm.expect(result.token).to.be.a('string').and.not.empty;",
+              "pm.collectionVariables.set('token', result.token);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userName\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/Account/v1/GenerateToken",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "GenerateToken"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3 - Confirmar autorização",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('A conta está autorizada', () => {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json()).to.equal(true);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userName\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/Account/v1/Authorized",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "Authorized"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4 - Listar livros disponíveis",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('O catálogo contém pelo menos dois livros', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const books = pm.response.json().books;",
+              "  pm.expect(books).to.be.an('array').with.lengthOf.at.least(2);",
+              "  pm.collectionVariables.set('isbn1', books[0].isbn);",
+              "  pm.collectionVariables.set('isbn2', books[1].isbn);",
+              "  pm.expect(books[0].isbn).not.to.equal(books[1].isbn);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/BookStore/v1/Books",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "BookStore",
+            "v1",
+            "Books"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5 - Associar dois livros à conta",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Os dois livros foram associados', () => pm.response.to.have.status(201));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"collectionOfIsbns\": [\n    { \"isbn\": \"{{isbn1}}\" },\n    { \"isbn\": \"{{isbn2}}\" }\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/BookStore/v1/Books",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "BookStore",
+            "v1",
+            "Books"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6 - Consultar detalhes do usuário",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('A conta contém exatamente os dois livros selecionados', () => {",
+              "  pm.response.to.have.status(200);",
+              "  const user = pm.response.json();",
+              "  pm.expect(user.userID || user.userId).to.equal(pm.collectionVariables.get('userId'));",
+              "  pm.expect(user.username || user.userName).to.equal(pm.collectionVariables.get('username'));",
+              "  const actual = user.books.map(book => book.isbn).sort();",
+              "  const expected = [pm.collectionVariables.get('isbn1'), pm.collectionVariables.get('isbn2')].sort();",
+              "  pm.expect(actual).to.deep.equal(expected);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/Account/v1/User/{{userId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User",
+            "{{userId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "7 - Remover conta sintética",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('A conta sintética foi removida', () => {",
+              "  pm.expect([200, 204]).to.include(pm.response.code);",
+              "});",
+              "if ([200, 204].includes(pm.response.code)) {",
+              "  ['username', 'password', 'userId', 'token', 'isbn1', 'isbn2'].forEach(key => pm.collectionVariables.unset(key));",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/Account/v1/User/{{userId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "Account",
+            "v1",
+            "User",
+            "{{userId}}"
+          ]
+        }
+      }
+    }
+  ]
+}

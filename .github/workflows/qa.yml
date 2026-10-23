@@ -1,0 +1,39 @@
+name: QA Automation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run API scenarios
+        run: npm run test:api
+
+      - name: Run UI scenarios
+        run: npm run test:ui
+
+      - name: Run bonus scenarios
+        run: npm run test:bonus
+
+      - name: Upload Cucumber reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-reports
+          path: reports/*.json
+          if-no-files-found: warn
