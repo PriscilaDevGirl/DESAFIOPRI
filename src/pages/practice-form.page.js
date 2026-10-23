@@ -51,7 +51,8 @@ class PracticeFormPage {
     await selects[0].sendKeys(student.state, Key.ENTER);
     await selects[1].sendKeys(student.city, Key.ENTER);
 
-    await this.driver.findElement(By.id("submit")).click();
+    // Keyboard activation remains available when the site's footer covers the button.
+    await this.driver.findElement(By.id("submit")).sendKeys(Key.ENTER);
     const modal = await this.driver.wait(
       until.elementLocated(By.css(".modal-content")),
       10_000

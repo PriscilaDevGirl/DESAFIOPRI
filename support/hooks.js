@@ -8,7 +8,7 @@ Before({ tags: "@ui" }, async function () {
   if (process.env.HEADLESS !== "false") {
     options.addArguments("--headless=new");
   }
-  options.addArguments("--window-size=1440,1000", "--no-sandbox", "--disable-dev-shm-usage");
+  options.addArguments("--window-size=1920,1080", "--no-sandbox", "--disable-dev-shm-usage");
 
   this.driver = await new Builder()
     .forBrowser("chrome")
